@@ -224,23 +224,3 @@ flutter build appbundle --release
 dart run flutter_launcher_icons
 ```
 
----
-
-## 🗺️ Roadmap
-
-- [x] Registro de horas con precisión de media hora (0.5h)
-- [x] Incrementos de cuartos de hora (0.25h)
-- [x] Notas diarias opcionales con indicador visual en el calendario
-- [x] Dashboard con ganancias estimadas y progreso mensual
-- [x] Notificaciones locales configurables
-- [ ] Exportación de datos a CSV/PDF
-- [ ] Vista de informes semanales y anuales
-- [ ] Soporte para múltiples proyectos/clientes
-- [ ] Sincronización en la nube (Firebase)
-- [ ] Modo claro (light theme)
-
----
-
-## 📄 Licencia
-
-Este proyecto es de uso privado. Todos los derechos reservados.
