@@ -72,6 +72,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       final bool isToday = now.year == date.year && now.month == date.month && now.day == date.day;
       final bool hasHours = hours > 0.0;
       final bool hasNote = note.isNotEmpty;
+      final bool isHoliday = appState.isHoliday(date);
+      final String? holidayName = appState.getHolidayName(date);
 
       dayWidgets.add(
         InkWell(
@@ -84,17 +86,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
               gradient: hasHours ? AppTheme.primaryGradient : null,
               color: hasHours 
                   ? null 
-                  : (isToday ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.02)),
+                  : (isHoliday 
+                      ? AppTheme.errorRed.withOpacity(0.08)
+                      : (isToday ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.02))),
               border: Border.all(
                 color: isToday 
                     ? AppTheme.primaryBlue 
-                    : (hasHours ? Colors.transparent : Colors.white.withOpacity(0.05)),
+                    : (hasHours 
+                        ? Colors.transparent 
+                        : (isHoliday ? AppTheme.errorRed.withOpacity(0.3) : Colors.white.withOpacity(0.05))),
                 width: isToday ? 2.0 : 1.0,
               ),
               boxShadow: hasHours 
                   ? [
                       BoxShadow(
-                        color: AppTheme.primaryBlue.withOpacity(0.3),
+                         color: AppTheme.primaryBlue.withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       )
@@ -112,13 +118,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         day.toString(),
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: isToday || hasHours ? FontWeight.bold : FontWeight.w500,
-                          color: hasHours ? Colors.white : (isToday ? AppTheme.primaryBlue : const Color(0xCCFFFFFF)),
+                          fontWeight: isToday || hasHours || isHoliday ? FontWeight.bold : FontWeight.w500,
+                          color: hasHours 
+                              ? Colors.white 
+                              : (isToday 
+                                  ? AppTheme.primaryBlue 
+                                  : (isHoliday ? AppTheme.errorRed : const Color(0xCCFFFFFF))),
                         ),
                       ),
                       const SizedBox(height: 2),
                       
-                      // Hours label
+                      // Hours label or dot indicators
                       if (hasHours)
                         Text(
                           '${hours.toStringAsFixed(hours % 1 == 0 ? 0 : (hours % 0.5 == 0 ? 1 : 2))}h',
@@ -126,6 +136,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
+                          ),
+                        )
+                      else if (isHoliday)
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.errorRed,
                           ),
                         )
                       else
@@ -140,6 +159,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                   ),
                 ),
+                // Holiday badge (red dot) in top-left if the day has hours logged
+                if (isHoliday && hasHours)
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.errorRed,
+                      ),
+                    ),
+                  ),
                 if (hasNote)
                   Positioned(
                     top: 6,

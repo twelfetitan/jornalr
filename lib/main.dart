@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'services/storage_service.dart';
 import 'services/notification_service.dart';
+import 'services/holiday_service.dart';
 import 'ui/theme.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/calendar_screen.dart';
@@ -35,12 +36,13 @@ void main() async {
   final storageService = await StorageService.init();
   final notificationService = NotificationService();
   await notificationService.init();
+  final holidayService = HolidayService();
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AppState>(
-          create: (_) => AppState(storageService, notificationService),
+          create: (_) => AppState(storageService, notificationService, holidayService),
         ),
       ],
       child: const MyApp(),

@@ -27,10 +27,12 @@ Diseñada para freelances, autónomos y trabajadores por horas que necesitan lle
 **Hours & Income Tracker** es una aplicación multiplataforma desarrollada en Flutter que permite al usuario:
 
 1. **Registrar las horas trabajadas cada día** con precisión de cuartos de hora (0.25h).
-2. **Calcular automáticamente los ingresos estimados** a partir de una tarifa por hora configurable.
+2. **Calcular automáticamente los ingresos estimados** diferenciando entre tarifas normales y especiales para fines de semana o días festivos.
 3. **Visualizar el progreso mensual** hacia un objetivo de horas personalizable.
-4. **Añadir notas diarias opcionales** a cualquier jornada (ausencias, festivos, incidencias, etc.).
-5. **Recibir recordatorios diarios** para no olvidar registrar la jornada.
+4. **Marcar los días festivos en el calendario**: Consulta los días festivos anuales de tu Comunidad Autónoma automáticamente desde la API de `generadordni.es` y márcalos en rojo.
+5. **Festivos locales personalizados**: Añade manualmente festivos específicos de tu ciudad o municipio.
+6. **Añadir notas diarias opcionales** a cualquier jornada (ausencias, incidencias, etc.).
+7. **Recibir recordatorios diarios** para no olvidar registrar la jornada.
 
 La interfaz utiliza un diseño oscuro premium con estética glassmorphic, animaciones fluidas y tipografía profesional (Plus Jakarta Sans vía Google Fonts).
 
@@ -41,10 +43,13 @@ La interfaz utiliza un diseño oscuro premium con estética glassmorphic, animac
 | Característica | Descripción |
 |---|---|
 | 🕐 **Registro flexible de horas** | Incrementos de 0.25h (cuartos de hora), slider interactivo y presets rápidos (0, 4, 8, 10, 12h). |
+| 💸 **Tarifa diferenciada** | Tarifa por hora normal para días de diario y tarifa especial para fines de semana (sábados y domingos) y días festivos. |
+| 🎉 **Días festivos integrados** | Descarga automática anual por Comunidad Autónoma de la API `generadordni.es` y marcado rojo visual en el calendario. |
+| 📍 **Festivos locales** | Sección de configuración para añadir festivos de ciudad/municipio a mano. |
 | 📝 **Notas diarias opcionales** | Campo de texto libre asociado a cada día para registrar motivos de ausencia, comentarios o incidencias. |
-| 💰 **Cálculo de ingresos en tiempo real** | Multiplicación automática de horas × tarifa por hora con animación de contador. |
+| 💰 **Cálculo de ingresos en tiempo real** | Multiplicación automática de horas × tarifa del día (normal o especial) con animación de contador. |
 | 📊 **Progreso mensual visual** | Anillo de progreso circular que muestra el avance respecto al objetivo de horas del mes. |
-| 📅 **Calendario interactivo** | Vista mensual completa con indicadores de color por día trabajado e indicador naranja para días con notas. |
+| 📅 **Calendario interactivo** | Vista mensual completa con indicadores de color por día trabajado, festivos (en rojo) e indicador naranja para días con notas. |
 | 🔔 **Recordatorios locales** | Notificaciones diarias configurables para recordar el registro de horas. |
 | 💱 **Multi-divisa** | Soporte para €, $, £, ¥ y ₩. |
 | 🎨 **Diseño premium dark mode** | Glassmorphism, gradientes, micro-animaciones y tipografía Plus Jakarta Sans. |
@@ -80,6 +85,8 @@ La aplicación sigue una arquitectura **limpia y reactiva**, organizada en tres 
 │  │                                             │ │
 │  │  • Horas por día (Map<String, double>)      │ │
 │  │  • Notas por día (Map<String, String>)      │ │
+│  │  • Festivos de la CCAA e individuales       │ │
+│  │  • Tarifas por día (Estándar / Especial)    │ │
 │  │  • Tarifa, divisa, objetivo, recordatorios  │ │
 │  │  • Cálculos derivados (totales, progreso)   │ │
 │  └──────────────┬──────────────────────────────┘ │
@@ -87,18 +94,22 @@ La aplicación sigue una arquitectura **limpia y reactiva**, organizada en tres 
                   │  async read/write
 ┌─────────────────┴───────────────────────────────┐
 │               Services Layer                    │
-│  (Persistencia local + Notificaciones)          │
+│  (Persistencia, Notificaciones y Festivos)      │
 │                                                 │
 │  ┌──────────────────┐  ┌──────────────────────┐ │
 │  │ StorageService   │  │ NotificationService  │ │
 │  │ (SharedPrefs)    │  │ (Local Notifications)│ │
 │  └──────────────────┘  └──────────────────────┘ │
+│  ┌──────────────────┐                           │
+│  │ HolidayService   │                           │
+│  │ (generadordni API)                           │
+│  └──────────────────┘                           │
 └─────────────────────────────────────────────────┘
 ```
 
 ### Patrón de gestión de estado
 
-Se utiliza **Provider** (`ChangeNotifierProvider<AppState>`) como solución de gestión de estado reactivo. Cada vez que el usuario modifica horas, notas o configuración, `AppState` persiste los cambios en `StorageService` y llama a `notifyListeners()`, lo que provoca la reconstrucción automática de los widgets suscritos.
+Se utiliza **Provider** (`ChangeNotifierProvider<AppState>`) como solución de gestión de estado reactivo. Cada vez que el usuario modifica horas, notas, festivos o configuración, `AppState` persiste los cambios en `StorageService` y llama a `notifyListeners()`, lo que provoca la reconstrucción automática de los widgets suscritos.
 
 ---
 
@@ -107,18 +118,21 @@ Se utiliza **Provider** (`ChangeNotifierProvider<AppState>`) como solución de g
 ```
 lib/
 ├── main.dart                          # Punto de entrada, inicialización de servicios y navegación principal
+├── models/
+│   └── holiday.dart                   # Modelo de datos Holiday (estructura, JSON)
 ├── providers/
 │   └── app_state.dart                 # Estado reactivo global (ChangeNotifier)
 ├── services/
 │   ├── storage_service.dart           # Capa de persistencia local (SharedPreferences)
-│   └── notification_service.dart      # Gestión de notificaciones locales programadas
+│   ├── notification_service.dart      # Gestión de notificaciones locales programadas
+│   └── holiday_service.dart           # Cliente API de consulta de festivos en generadordni.es
 └── ui/
     ├── theme.dart                     # Sistema de diseño: colores, gradientes, tipografía, tema Material 3
     ├── screens/
     │   ├── home_screen.dart           # Dashboard principal: saludo, ganancias, progreso, registro del día
-    │   ├── calendar_screen.dart       # Calendario mensual interactivo con edición de horas y notas
-    │   ├── edit_hours_sheet.dart      # Bottom sheet para editar horas y notas de un día concreto
-    │   └── settings_screen.dart       # Configuración: tarifa, divisa, objetivo, recordatorios, reset
+    │   ├── calendar_screen.dart       # Calendario mensual interactivo con edición de horas, notas y festivos
+    │   ├── edit_hours_sheet.dart      # Bottom sheet para editar horas, notas y visualizar festivos del día
+    │   └── settings_screen.dart       # Configuración: tarifa (normal/especial), divisa, objetivo, recordatorios, ubicación (CCAA), festivos locales
     └── widgets/
         ├── hours_picker.dart          # Selector de horas reutilizable (stepper + slider + presets)
         ├── glass_card.dart            # Contenedor glassmorphic reutilizable
@@ -135,13 +149,19 @@ La aplicación utiliza **`SharedPreferences`** como mecanismo de almacenamiento 
 
 | Clave | Tipo | Valor por defecto | Descripción |
 |---|---|---|---|
-| `hourly_rate` | `double` | `15.0` | Tarifa por hora del usuario |
+| `hourly_rate` | `double` | `15.0` | Tarifa estándar por hora del usuario |
+| `special_hourly_rate` | `double` | `20.0` | Tarifa por hora para fines de semana y festivos |
 | `currency` | `String` | `€` | Símbolo de la divisa seleccionada |
 | `target_hours` | `double` | `160.0` | Objetivo mensual de horas |
 | `work_entries` | `String` (JSON) | `{}` | Mapa `{ "YYYY-MM-DD": hours }` serializado |
 | `day_notes` | `String` (JSON) | `{}` | Mapa `{ "YYYY-MM-DD": "nota" }` serializado |
 | `reminder_enabled` | `bool` | `false` | Si las notificaciones diarias están activas |
 | `reminder_time` | `String` | `20:00` | Hora de envío del recordatorio (formato HH:mm) |
+| `work_state_code` | `String` | `""` | Código de la comunidad autónoma de trabajo (p. ej., "MD") |
+| `work_state_name` | `String` | `""` | Nombre de la comunidad autónoma de trabajo |
+| `holidays_cache` | `String` (JSON) | `"[]"` | Listado de festivos de la API en formato JSON |
+| `holidays_cache_key` | `String` | `""` | Llave en formato `"{stateCode}_{year}"` para control de caché |
+| `local_holidays` | `String` (JSON) | `"[]"` | Festivos locales/municipales creados a mano |
 
 ### Formato de serialización JSON
 

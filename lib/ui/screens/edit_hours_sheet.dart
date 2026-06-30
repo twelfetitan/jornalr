@@ -84,6 +84,37 @@ class _EditHoursSheetState extends State<EditHoursSheet> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
+              
+              // Holiday Name Chip
+              if (widget.appState.isHoliday(widget.date)) ...[
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.errorRed.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.errorRed.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.festival_rounded, color: AppTheme.errorRed, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.appState.getHolidayName(widget.date) ?? 'Festivo',
+                          style: const TextStyle(
+                            color: AppTheme.errorRed,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               const Text(
                 'Modifica las horas trabajadas en este día',
                 style: TextStyle(fontSize: 14, color: Colors.white38),

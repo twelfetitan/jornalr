@@ -226,7 +226,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Statistics Card
-                _buildStatsGrid(context, totalMonthHours, appState.hourlyRate, appState.currency),
+                _buildStatsGrid(context, totalMonthHours, monthlyEarnings, appState.currency),
               ],
             ),
           ),
@@ -235,7 +235,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid(BuildContext context, double totalHours, double hourlyRate, String currency) {
+  Widget _buildStatsGrid(BuildContext context, double totalHours, double monthlyEarnings, String currency) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -249,7 +249,7 @@ class HomeScreen extends StatelessWidget {
           Container(width: 1, height: 40, color: Colors.white10),
           _buildStatItem(
             icon: Icons.insights_rounded,
-            value: '${(totalHours * hourlyRate).toStringAsFixed(2)}${currency}',
+            value: '${monthlyEarnings.toStringAsFixed(2)}${currency}',
             label: 'Total Bruto',
           ),
         ],
