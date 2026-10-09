@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test_app_my/providers/app_state.dart';
 import 'package:flutter_test_app_my/services/storage_service.dart';
 import 'package:flutter_test_app_my/services/notification_service.dart';
+import 'package:flutter_test_app_my/services/holiday_service.dart';
+import 'package:flutter_test_app_my/models/holiday.dart';
 
 class MockNotificationService extends NotificationService {
   @override
@@ -15,12 +17,18 @@ class MockNotificationService extends NotificationService {
   Future<void> cancelDailyReminder() async {}
 }
 
+class MockHolidayService extends HolidayService {
+  @override
+  Future<List<Holiday>> fetchHolidays(String stateCode, int year) async => [];
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('AppState Tests', () {
     late StorageService storageService;
     late MockNotificationService notificationService;
+    late MockHolidayService holidayService;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({
@@ -31,10 +39,11 @@ void main() {
       });
       storageService = await StorageService.init();
       notificationService = MockNotificationService();
+      holidayService = MockHolidayService();
     });
 
     test('Initial state values are loaded correctly', () {
-      final appState = AppState(storageService, notificationService);
+      final appState = AppState(storageService, notificationService, holidayService);
       expect(appState.hourlyRate, 20.0);
       expect(appState.currency, '€');
       expect(appState.targetHours, 160.0);
@@ -44,7 +53,7 @@ void main() {
     });
 
     test('Setting hours updates values and notifies listeners', () async {
-      final appState = AppState(storageService, notificationService);
+      final appState = AppState(storageService, notificationService, holidayService);
       bool listenerNotified = false;
       appState.addListener(() {
         listenerNotified = true;
@@ -56,17 +65,17 @@ void main() {
     });
 
     test('Calculations of monthly hours and earnings are correct', () {
-      final appState = AppState(storageService, notificationService);
+      final appState = AppState(storageService, notificationService, holidayService);
       final june2026 = DateTime(2026, 6, 1);
       
-      // Initial: 8.0 + 6.0 = 14.0 hours
+      // Initial: 8.0 + 6.0 = 14.0 hours (2026-06-15 is Monday)
       expect(appState.getTotalHoursForMonth(june2026), 14.0);
       expect(appState.getEarningsForMonth(june2026), 280.0); // 14.0 * 20.0
       expect(appState.getMonthlyProgress(june2026), 14.0 / 160.0);
     });
 
     test('Updating currency and hourly rate works correctly', () async {
-      final appState = AppState(storageService, notificationService);
+      final appState = AppState(storageService, notificationService, holidayService);
       
       await appState.updateHourlyRate(25.0);
       await appState.updateCurrency(r'$');
@@ -79,3 +88,4 @@ void main() {
     });
   });
 }
+
