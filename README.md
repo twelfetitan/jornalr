@@ -29,10 +29,11 @@ Diseñada para freelances, autónomos y trabajadores por horas que necesitan lle
 1. **Registrar las horas trabajadas cada día** con precisión de cuartos de hora (0.25h).
 2. **Calcular automáticamente los ingresos estimados** diferenciando entre tarifas normales y especiales para fines de semana o días festivos.
 3. **Visualizar el progreso mensual** hacia un objetivo de horas personalizable.
-4. **Marcar los días festivos en el calendario**: Consulta los días festivos anuales de tu Comunidad Autónoma automáticamente desde la API de `generadordni.es` y márcalos en rojo.
-5. **Festivos locales personalizados**: Añade manualmente festivos específicos de tu ciudad o municipio.
-6. **Añadir notas diarias opcionales** a cualquier jornada (ausencias, incidencias, etc.).
-7. **Recibir recordatorios diarios** para no olvidar registrar la jornada.
+4. **Consultar estadísticas y meses anteriores**: Pantalla dedicada a analizar ingresos totales, horas trabajadas por mes, comparativa visual mediante gráfico de barras y medias reales por hora.
+5. **Marcar los días festivos en el calendario**: Consulta los días festivos anuales de tu Comunidad Autónoma automáticamente desde la API de `generadordni.es` y márcalos en rojo.
+6. **Festivos locales personalizados**: Añade manualmente festivos específicos de tu ciudad o municipio.
+7. **Añadir notas diarias opcionales** a cualquier jornada (ausencias, incidencias, etc.).
+8. **Recibir recordatorios diarios** para no olvidar registrar la jornada.
 
 La interfaz utiliza un diseño oscuro premium con estética glassmorphic, animaciones fluidas y tipografía profesional (Plus Jakarta Sans vía Google Fonts).
 
@@ -44,15 +45,16 @@ La interfaz utiliza un diseño oscuro premium con estética glassmorphic, animac
 |---|---|
 | 🕐 **Registro flexible de horas** | Incrementos de 0.25h (cuartos de hora), slider interactivo y presets rápidos (0, 4, 8, 10, 12h). |
 | 💸 **Tarifa diferenciada** | Tarifa por hora normal para días de diario y tarifa especial para fines de semana (sábados y domingos) y días festivos. |
+| 📊 **Estadísticas y Meses Anteriores** | Nueva pantalla de analítica con selector de año, gráfico mensual de barras, total bruto anual y desglose completo mes a mes. |
 | 🎉 **Días festivos integrados** | Descarga automática anual por Comunidad Autónoma de la API `generadordni.es` y marcado rojo visual en el calendario. |
 | 📍 **Festivos locales** | Sección de configuración para añadir festivos de ciudad/municipio a mano. |
 | 📝 **Notas diarias opcionales** | Campo de texto libre asociado a cada día para registrar motivos de ausencia, comentarios o incidencias. |
 | 💰 **Cálculo de ingresos en tiempo real** | Multiplicación automática de horas × tarifa del día (normal o especial) con animación de contador. |
-| 📊 **Progreso mensual visual** | Anillo de progreso circular que muestra el avance respecto al objetivo de horas del mes. |
+| 📈 **Progreso mensual visual** | Anillo de progreso circular que muestra el avance respecto al objetivo de horas del mes. |
 | 📅 **Calendario interactivo** | Vista mensual completa con indicadores de color por día trabajado, festivos (en rojo) e indicador naranja para días con notas. |
 | 🔔 **Recordatorios locales** | Notificaciones diarias configurables para recordar el registro de horas. |
 | 💱 **Multi-divisa** | Soporte para €, $, £, ¥ y ₩. |
-| 🎨 **Diseño premium dark mode** | Glassmorphism, gradientes, micro-animaciones y tipografía Plus Jakarta Sans. |
+| 🎨 **Diseño premium dark mode** | Glassmorphic, gradientes, micro-animaciones y tipografía Plus Jakarta Sans. |
 
 ---
 
@@ -61,50 +63,50 @@ La interfaz utiliza un diseño oscuro premium con estética glassmorphic, animac
 La aplicación sigue una arquitectura **limpia y reactiva**, organizada en tres capas bien diferenciadas:
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   UI Layer                      │
-│  (Screens, Widgets, Theme)                      │
-│                                                 │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │  Home    │ │ Calendar │ │    Settings      │ │
-│  │  Screen  │ │  Screen  │ │     Screen       │ │
-│  └────┬─────┘ └────┬─────┘ └───────┬──────────┘ │
-│       │            │               │            │
-│  ┌────┴────┐  ┌────┴────┐  ┌───────┴──────────┐ │
-│  │ Hours   │  │ Glass   │  │ Animated Counter │ │
-│  │ Picker  │  │  Card   │  │                  │ │
-│  └─────────┘  └─────────┘  └──────────────────┘ │
-└───────────────────┬─────────────────────────────┘
-                    │  context.watch / context.read
-┌───────────────────┴─────────────────────────────┐
-│              State Management Layer             │
-│          (Provider + ChangeNotifier)             │
-│                                                 │
-│  ┌─────────────────────────────────────────────┐ │
-│  │              AppState                       │ │
-│  │                                             │ │
-│  │  • Horas por día (Map<String, double>)      │ │
-│  │  • Notas por día (Map<String, String>)      │ │
-│  │  • Festivos de la CCAA e individuales       │ │
-│  │  • Tarifas por día (Estándar / Especial)    │ │
-│  │  • Tarifa, divisa, objetivo, recordatorios  │ │
-│  │  • Cálculos derivados (totales, progreso)   │ │
-│  └──────────────┬──────────────────────────────┘ │
-└─────────────────┼───────────────────────────────┘
-                  │  async read/write
-┌─────────────────┴───────────────────────────────┐
-│               Services Layer                    │
-│  (Persistencia, Notificaciones y Festivos)      │
-│                                                 │
-│  ┌──────────────────┐  ┌──────────────────────┐ │
-│  │ StorageService   │  │ NotificationService  │ │
-│  │ (SharedPrefs)    │  │ (Local Notifications)│ │
-│  └──────────────────┘  └──────────────────────┘ │
-│  ┌──────────────────┐                           │
-│  │ HolidayService   │                           │
-│  │ (generadordni API)                           │
-│  └──────────────────┘                           │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                            UI Layer                             │
+│                   (Screens, Widgets, Theme)                     │
+│                                                                 │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ ┌─────────────┐ │
+│  │  Home    │ │ Calendar │ │    Analytics     │ │  Settings   │ │
+│  │  Screen  │ │  Screen  │ │      Screen      │ │   Screen    │ │
+│  └────┬─────┘ └────┬─────┘ └────────┬─────────┘ └──────┬──────┘ │
+│       │            │                │                  │        │
+│  ┌────┴────┐  ┌────┴────┐  ┌────────┴─────────┐ ┌──────┴──────┐ │
+│  │ Hours   │  │ Glass   │  │ Animated Counter │ │ Dropdowns   │ │
+│  │ Picker  │  │  Card   │  │                  │ │ & Pickers   │ │
+│  └─────────┘  └─────────┘  └──────────────────┘ └─────────────┘ │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │  context.watch / context.read
+┌───────────────────────────────┴─────────────────────────────────┐
+│                     State Management Layer                      │
+│                   (Provider + ChangeNotifier)                   │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                          AppState                         │  │
+│  │                                                           │  │
+│  │  • Horas por día (Map<String, double>)                    │  │
+│  │  • Notas por día (Map<String, String>)                    │  │
+│  │  • Festivos de la CCAA e individuales                     │  │
+│  │  • Tarifas por día (Estándar / Especial)                  │  │
+│  │  • Tarifa, divisa, objetivo, recordatorios                │  │
+│  │  • Cálculos derivados (totales, progreso, analítica anual)│  │
+│  └────────────────────────────┬──────────────────────────────┘  │
+└───────────────────────────────┼─────────────────────────────────┘
+                                │  async read/write
+┌───────────────────────────────┴─────────────────────────────────┐
+│                        Services Layer                           │
+│           (Persistencia, Notificaciones y Festivos)             │
+│                                                                 │
+│  ┌──────────────────┐  ┌──────────────────────┐                 │
+│  │ StorageService   │  │ NotificationService  │                 │
+│  │ (SharedPrefs)    │  │ (Local Notifications)│                 │
+│  └──────────────────┘  └──────────────────────┘                 │
+│  ┌──────────────────┐                                           │
+│  │ HolidayService   │                                           │
+│  │ (generadordni API)                                           │
+│  └──────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Patrón de gestión de estado
@@ -131,6 +133,7 @@ lib/
     ├── screens/
     │   ├── home_screen.dart           # Dashboard principal: saludo, ganancias, progreso, registro del día
     │   ├── calendar_screen.dart       # Calendario mensual interactivo con edición de horas, notas y festivos
+    │   ├── analytics_screen.dart      # Pantalla de estadísticas: meses anteriores, horas, precio total y gráficos
     │   ├── edit_hours_sheet.dart      # Bottom sheet para editar horas, notas y visualizar festivos del día
     │   └── settings_screen.dart       # Configuración: tarifa (normal/especial), divisa, objetivo, recordatorios, ubicación (CCAA), festivos locales
     └── widgets/

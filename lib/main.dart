@@ -10,6 +10,7 @@ import 'services/holiday_service.dart';
 import 'ui/theme.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/calendar_screen.dart';
+import 'ui/screens/analytics_screen.dart';
 import 'ui/screens/settings_screen.dart';
 
 void main() async {
@@ -80,6 +81,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   final List<Widget> _screens = const [
     HomeScreen(),
     CalendarScreen(),
+    AnalyticsScreen(),
     SettingsScreen(),
   ];
 
@@ -96,9 +98,11 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
             ),
           ),
           // Active Screen
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
+          Positioned.fill(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
           ),
         ],
       ),
@@ -113,6 +117,9 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          selectedFontSize: 11.0,
+          unselectedFontSize: 11.0,
           onTap: (index) {
             setState(() {
               _currentIndex = index;
@@ -130,6 +137,11 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
               label: 'Historial',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_rounded),
+              activeIcon: Icon(Icons.bar_chart_rounded, color: AppTheme.primaryBlue),
+              label: 'Estadísticas',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.settings_rounded),
               activeIcon: Icon(Icons.settings_rounded, color: AppTheme.primaryBlue),
               label: 'Ajustes',
@@ -140,3 +152,4 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     );
   }
 }
+
